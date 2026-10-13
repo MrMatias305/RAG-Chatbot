@@ -1,20 +1,12 @@
-from vector_db import get_collection
+from retriever import retrieve_documents
 
-collection = get_collection()
-query = "How does artificial intelligence help analyze business data?"
+question = "What are the differences between Scrum and Kanban?"
 
-results = collection.query(
-    query_texts=[query],
-    n_results=5,
-    # where={'source': 'Artificial Intelligence with Microsoft Power BI.pdf'},
-    include=['documents', 'metadatas', 'distances']
-)
+results = retrieve_documents(question, 5)
 
-for i, document in enumerate(results['documents'][0], start=1):
-    metadata = results['metadatas'][0][i-1]
-    distance = results['distances'][0][i-1]
-
-    print(f"\nSource: ", metadata['source'])
-    print("Page: ", metadata['page_number'])
-    print("Distance: ", distance)
-    print("Text: ", document)
+for i, result in enumerate(results, start=1):
+    print(f"\n--- Result {i} ---")
+    print("Source:", result["source"])
+    print("Distance:", result["distance"])
+    print("Page:", result["page_number"])
+    print("Text:", result["text"])
