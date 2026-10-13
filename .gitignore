@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Source PDFs
+data/pdfs/*.pdf
+
+# Vector database
+data/db/
