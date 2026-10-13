@@ -1,12 +1,12 @@
 from vector_db import get_collection
 
 collection = get_collection()
-query = "what is an AI model?"
+query = "Explain AI architecture?"
 
 results = collection.query(
     query_texts=[query],
     n_results=5,
-    where={'source': 'Artificial Intelligence with Microsoft Power BI.pdf'},
+    # where={'source': 'Artificial Intelligence with Microsoft Power BI.pdf'},
     include=['documents', 'metadatas', 'distances']
 )
 
