@@ -1,7 +1,7 @@
 from vector_db import get_collection
 
 collection = get_collection()
-query = "Explain AI architecture?"
+query = "How does artificial intelligence help analyze business data?"
 
 results = collection.query(
     query_texts=[query],

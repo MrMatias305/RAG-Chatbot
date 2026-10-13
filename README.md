@@ -227,16 +227,5 @@ The returned metadata helps identify where the retrieved information originated.
 - [ ] Improve document update and deletion handling
 - [ ] Add automated tests
 
-## Learning Objectives
 
-This project is intended to develop practical understanding of:
-
-1. Retrieval-Augmented Generation.
-2. Text extraction and preprocessing.
-3. Chunking strategies and context overlap.
-4. Embeddings and vector similarity.
-5. Persistent vector databases.
-6. Semantic retrieval and metadata filtering.
-7. Retrieval evaluation.
-8. Grounded LLM responses and source attribution.
 
