@@ -1,14 +1,19 @@
 from vector_db import get_collection
 
 
-def retrieve_documents(query, n_results=3):
+def retrieve_documents(query, n_results=3, source=None):
     collection = get_collection()
 
-    results = collection.query(
-        query_texts=[query],
-        n_results=n_results,
-        include=['documents', 'metadatas', 'distances']
-    )
+    query_options = {
+        'query_texts': [query],
+        'n_results': n_results,
+        'include': ['documents', 'metadatas', 'distances'],
+    }
+
+    if source:
+        query_options['where'] = {'source': source}
+
+    results = collection.query(**query_options)
 
     retrieved_documents = []
 
