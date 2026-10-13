@@ -1,18 +1,25 @@
 from pypdf import PdfReader
 from pathlib import Path
 
+from vector_db import store_chunks
+
 PDF_DIR = Path(__file__).parent.parent / 'data/pdfs'
 
 def extract_pdfs():
+	"""Get all PDFs found in PDF_DIR"""
+
 	pdf_files = list(PDF_DIR.glob('*.pdf'))
 	return pdf_files
 
 
 def clean_text(text):
+	"""Clean text from PDFs"""
 	return " ".join(text.split())
 
 
 def extract_text(pdf_path):
+	"""Extract text from PDFs"""
+
 	reader = PdfReader(str(pdf_path))
 	pages = []
 
@@ -66,7 +73,6 @@ if __name__ == "__main__":
 						"text": chunk
 					})
 
-	for chunk in all_chunks[:50]:
-		print(f"{chunk["chunk_id"]}: {chunk["text"]}")
+		store_chunks(all_chunks)
 
 
