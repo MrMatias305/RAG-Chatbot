@@ -1,3 +1,4 @@
+from schemas import RetrievedDocument
 from vector_db import get_collection
 
 
@@ -23,12 +24,14 @@ def retrieve_documents(query, n_results=3, source=None):
         metadata = results['metadatas'][0][i]
         distances = results['distances'][0][i]
 
-        retrieved_documents.append({
-            "text": document,
-            "source": metadata["source"],
-            "page_number": metadata["page_number"],
-            "distance": distances,
-        })
+        retrieved_documents.append(
+            RetrievedDocument(
+                text=document,
+                source=metadata["source"],
+                page_number=metadata["page_number"],
+                distance=distances,
+            )
+        )
     return retrieved_documents
 
 

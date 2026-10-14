@@ -19,9 +19,9 @@ def generate_answer(question):
     context_parts = []
 
     for document in documents:
-        source = document["source"]
-        page = document["page_number"]
-        text = document["text"]
+        source = document.source
+        page = document.page_number
+        text = document.text
         context_parts.append(f"[Source: {source} | Page: {page}]\n{text}")
 
     context = "\n\n".join(context_parts)
@@ -57,6 +57,6 @@ if __name__ == '__main__':
 
     print("\n--- Sources ---")
     for i, document in enumerate(documents, start=1):
-        source = document["source"]
-        page = document["page_number"]
+        source = document.source
+        page = document.page_number
         print(f"{i}. [Source: {source} | Page: {page}]")
