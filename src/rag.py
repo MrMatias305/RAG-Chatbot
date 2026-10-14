@@ -9,16 +9,24 @@ client = OpenAI()
 def generate_answer(question):
     """Generates answer from question"""
 
+    # Retrieve documents
     documents = retrieve_documents(question, n_results=3)
 
     if not documents:
         return "I cannot find relevant information in the documents"
 
-    context = "\n\n".join(
-        document["text"]
-        for document in documents
-    )
+    # Build context
+    context_parts = []
 
+    for document in documents:
+        source = document["source"]
+        page = document["page_number"]
+        text = document["text"]
+        context_parts.append(f"[Source: {source} | Page: {page}]\n{text}")
+
+    context = "\n\n".join(context_parts)
+
+    # Construct the prompt
     prompt = f"""
     Answer the question on provided context.
     
@@ -38,9 +46,17 @@ def generate_answer(question):
         input=prompt
     )
 
-    return response.output_text
+    return response.output_text, documents
 
 if __name__ == '__main__':
     question = input("> ")
-    answer = generate_answer(question)
+    answer, documents = generate_answer(question)
+
+    print("\n--- Answer ---")
     print(answer)
+
+    print("\n--- Sources ---")
+    for i, document in enumerate(documents, start=1):
+        source = document["source"]
+        page = document["page_number"]
+        print(f"{i}. [Source: {source} | Page: {page}]")
