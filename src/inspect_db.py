@@ -1,8 +1,8 @@
 from retriever import retrieve_documents
 
-question = "What are the differences between Scrum and Kanban?"
+question = "What is XP?"
 
-results = retrieve_documents(question, 5)
+results = retrieve_documents(question, n_results=5)
 
 for i, result in enumerate(results, start=1):
     print(f"\n--- Result {i} ---")

@@ -2,6 +2,8 @@ from vector_db import get_collection
 
 
 def retrieve_documents(query, n_results=3, source=None):
+    """Retrieves documents from a query."""
+
     collection = get_collection()
 
     query_options = {
@@ -31,6 +33,6 @@ def retrieve_documents(query, n_results=3, source=None):
 
 
 if __name__ == "__main__":
-    results = retrieve_documents("What is AI?", 5)
+    results = retrieve_documents("What is Kanban?", 5)
     for i, result in enumerate(results, start=1):
         print(f"{i}. {result['text']}")
