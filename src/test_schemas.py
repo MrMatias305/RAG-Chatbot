@@ -1,6 +1,6 @@
 from schemas import RetriedDocument
 
-document = RetriedDocument(
+document = RetrievedDocument(
     text="AI can help analyze business data",
     source="modern_world_with_AI_agesnts.pdf",
     page_number=24,
@@ -17,7 +17,7 @@ try:
     RetriedDocument(
         text="AI can help analyze business data",
         source="modern_world_with_AI_agesnts.pdf",
-        page_number=45,
+        page_number="not a page",
         distance=-0.48,
     )
 except ValueError as e:
