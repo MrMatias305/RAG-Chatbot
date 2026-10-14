@@ -1,4 +1,6 @@
-from schemas import RetriedDocument
+from pydantic import ValidationError
+
+from schemas import RetrievedDocument
 
 document = RetrievedDocument(
     text="AI can help analyze business data",
@@ -14,11 +16,11 @@ print("Distance: ", document.distance)
 
 print("\nChecking invalid document...")
 try:
-    RetriedDocument(
+    RetrievedDocument(
         text="AI can help analyze business data",
         source="modern_world_with_AI_agesnts.pdf",
         page_number="not a page",
         distance=-0.48,
     )
-except ValueError as e:
+except ValidationError as e:
     print(e)
