@@ -46,7 +46,11 @@ def evaluate_retrieval(k=3):
             reciprocal_ranks.append(0)
 
         # Calculate precision
-        precision = len(relevant_retrieved_sources) / k
+        if documents:
+            precision = len(relevant_retrieved_sources) / len(documents)
+        else:
+            precision = 0.0
+
         precision_scores.append(precision)
 
         # Calculate recall
@@ -70,8 +74,8 @@ def evaluate_retrieval(k=3):
     print("\n", "="*40)
     print(f"Hit Rate@{k}: {hit_rate:.2%}")
     print(f"MRR: {mrr:.4%}")
-    print(f"Mean_Precision@{k}: {mean_precision:.2%}")
-    print(f"Mean_Recall@{k}: {mean_recall:.2%}")
+    print(f"Mean Precision@{k}: {mean_precision:.2%}")
+    print(f"Mean Recall@{k}: {mean_recall:.2%}")
     print("="*40)
 
 if __name__ == "__main__":
