@@ -1,38 +1,63 @@
 # RAG Chatbot
 
-A Python-based Retrieval-Augmented Generation (RAG) chatbot that allows users to ask questions about their PDF documents. The project combines semantic search with a Large Language Model (LLM) to retrieve relevant passages and generate answers grounded in the retrieved context.
+A Python-based **Retrieval-Augmented Generation (RAG) chatbot** that answers questions about PDF documents using semantic search and a Large Language Model (LLM).
 
-The project is being developed incrementally to explore document processing, vector databases, semantic retrieval, prompt construction, and LLM integration.
+The project combines PDF text extraction, text chunking, vector storage, semantic retrieval, context-grounded answer generation, structured output validation, source citations, and retrieval evaluation.
+
+It is being developed incrementally, with an emphasis on understanding each component, evaluating retrieval quality, and improving reliability before introducing additional infrastructure.
 
 ## Overview
 
 Traditional keyword search looks for matching words. Semantic search retrieves passages based on the conceptual similarity between a query and stored document chunks.
 
-Retrieval-Augmented Generation (RAG) extends semantic search by providing retrieved information to a language model, which uses that context to formulate an answer.
+Retrieval-Augmented Generation (RAG) extends this approach by supplying retrieved information to a language model, which uses that context to generate an answer.
 
-This project implements a basic RAG pipeline using ChromaDB for retrieval and the OpenAI API for answer generation.
+This project implements a local document retrieval pipeline using ChromaDB and an answer-generation pipeline using the OpenAI API.
 
-### Current Features
+The application processes PDF documents, stores their text chunks and embeddings, retrieves potentially relevant passages for a user's question, and generates a structured response with source citations.
 
+## Current Features
+
+### Document Processing
 - Extract text from PDF documents using `pypdf`.
-- Clean extracted text by normalizing whitespace.
-- Split text into overlapping chunks.
-- Assign sequential IDs to chunks.
-- Store document chunks and metadata in persistent ChromaDB storage.
+- Normalize extracted text by cleaning whitespace.
+- Split text into overlapping word-based chunks.
+- Assign sequential identifiers to chunks.
+- Preserve source filenames and page numbers as metadata.
+
+### Vector Storage and Retrieval
+- Store document chunks in persistent ChromaDB storage.
 - Generate embeddings using ChromaDB's default embedding function.
 - Perform semantic searches against stored documents.
-- Retrieve source filenames and page numbers.
-- Filter search results using metadata.
 - Configure the number of retrieved chunks.
+- Filter retrieval results using source metadata.
 - Inspect retrieved passages and their distance scores.
 - Reuse retrieval logic through a dedicated retriever function.
-- Connect the retriever to the OpenAI API.
-- Generate natural-language answers using retrieved document context.
-- Instruct the LLM to acknowledge when the provided context is insufficient.
+
+### Answer Generation
+- Integrate the retriever with the OpenAI API.
+- Generate natural-language answers using retrieved context.
+- Use the OpenAI Responses API with `gpt-4.1-mini`.
+- Construct prompts containing retrieved passages and source information.
+- Instruct the model to acknowledge insufficient context.
+- Generate structured answers using Pydantic and OpenAI Structured Outputs.
+- Represent answer citations using source filenames and page numbers.
+- Include an insufficient-context status in the response.
+
+### Retrieval Evaluation
+- Maintain a set of evaluation questions and manually labeled relevant documents.
+- Calculate Hit Rate@K.
+- Calculate Mean Reciprocal Rank (MRR).
+- Calculate Precision@K.
+- Calculate Recall@K.
+- Skip questions without relevance labels.
+- Handle cases where the retriever returns fewer documents than requested when calculating precision.
+
+---
 
 ## Architecture
 
-The current pipeline consists of two main stages: document ingestion and question answering.
+The application consists of two primary pipelines: document ingestion and question answering.
 
 ### 1. Document Ingestion
 
@@ -41,56 +66,101 @@ The current pipeline consists of two main stages: document ingestion and questio
                    |
                    v
             Text Extraction
+                (pypdf)
                    |
                    v
               Text Cleaning
                    |
                    v
              Text Chunking
-          (300 words, 50-word overlap)
+          (300 words, 50 overlap)
                    |
                    v
            Assign Sequential IDs
                    |
                    v
+         Attach Source Metadata
+                   |
+                   v
                 ChromaDB
                    |
                    v
-          Persistent Vector Storage
+         Persistent Vector Storage
 ```
+
+The ingestion process extracts text from PDF documents, normalizes whitespace, splits the text into overlapping chunks, and stores the chunks with their metadata.
+
+ChromaDB generates embeddings when documents are added without explicitly supplied embeddings.
 
 ### 2. Question Answering
 
 ```text
-             User's Question
-                    |
-                    v
-            Semantic Retrieval
-                    |
-                    v
-          ChromaDB Retriever
-                    |
-                    v
-          Retrieve Relevant Chunks
-                    |
-                    v
-          Construct Context Prompt
-                    |
-                    v
-              OpenAI API
-                    |
-                    v
-             Language Model
-                    |
-                    v
-             Generated Answer
+              User's Question
+                     |
+                     v
+             Semantic Retrieval
+                     |
+                     v
+               ChromaDB
+                     |
+                     v
+           Retrieve Relevant Chunks
+                     |
+                     v
+          Construct Context and Prompt
+                     |
+                     v
+                OpenAI API
+                     |
+                     v
+             Structured RAG Answer
+                     |
+            +--------+---------+
+            |        |         |
+            v        v         v
+          Answer  Citations  Context Status
 ```
 
-The retriever searches the stored document chunks and returns the most relevant results. The application combines their text with the user's question and sends the resulting prompt to the language model.
+The retriever searches the stored document chunks and returns the requested number of results.
 
-The model is instructed to answer using the provided context and to acknowledge when that context does not contain sufficient information.
+The application constructs a context containing the retrieved passages, source filenames, and page numbers. This context is passed to the language model alongside the user's question.
 
-The current implementation is a basic RAG pipeline. It does not yet provide verified source citations or guarantee that every generated claim is supported by the retrieved passages.
+The model returns a structured answer containing:
+- The generated answer.
+- A list of source citations.
+- A flag indicating whether the available context is insufficient.
+
+The structured response is validated against a Pydantic model.
+
+**Important:** Structured output validation checks the response's structure and data types. It does not independently establish that the answer is factually correct or that every citation genuinely supports the associated claims.
+
+### 3. Retrieval Evaluation
+
+```text
+             Evaluation Questions
+                     |
+                     v
+          Manually Labeled Documents
+                     |
+                     v
+             Semantic Retrieval
+                     |
+                     v
+          Compare Retrieved Results
+          Against Relevance Labels
+                     |
+                     v
+             Calculate Metrics
+                     |
+          +----------+----------+
+          |          |          |
+          v          v          v
+       Hit Rate     MRR     Precision/Recall
+```
+
+The evaluation pipeline measures how well the retriever ranks and retrieves documents that have been manually labeled as relevant to each question.
+
+---
 
 ## Technologies
 
@@ -99,10 +169,11 @@ The current implementation is a basic RAG pipeline. It does not yet provide veri
 | Python | Application logic and document processing |
 | pypdf | Extracting text from PDF documents |
 | ChromaDB | Persistent vector storage and semantic retrieval |
-| Embeddings | Representing text as numerical vectors for similarity search |
+| Embeddings | Representing text as numerical vectors |
 | OpenAI API | Generating answers from retrieved context |
 | OpenAI Python SDK | Communicating with the OpenAI API |
-| python-dotenv | Loading environment variables from a `.env` file |
+| Pydantic | Validating structured data and RAG responses |
+| python-dotenv | Loading environment variables |
 | Git | Version control |
 
 ## Project Structure
@@ -110,64 +181,75 @@ The current implementation is a basic RAG pipeline. It does not yet provide veri
 ```text
 RAG-Chatbot/
 ├── data/
-│   ├── pdfs/               # Local PDF documents
-│   └── db/                 # Persistent ChromaDB database
+│   ├── pdfs/                    # Local PDF documents
+│   └── db/                      # Persistent ChromaDB database
 ├── src/
 │   ├── __init__.py
-│   ├── ingest.py           # PDF extraction, cleaning, and chunking
-│   ├── vector_db.py        # ChromaDB collection and storage operations
-│   ├── inspect_db.py       # Database inspection and retrieval experiments
-│   ├── retriever.py        # Reusable semantic retrieval function
-│   ├── test_llm.py         # Standalone OpenAI API test
-│   └── rag.py              # RAG pipeline and answer generation
-├── .env                    # Local environment variables; never commit
+│   ├── ingest.py                # PDF ingestion and text chunking
+│   ├── vector_db.py             # ChromaDB collection management
+│   ├── inspect_db.py            # Database inspection and retrieval experiments
+│   ├── retriever.py             # Reusable semantic retrieval function
+│   ├── test_llm.py              # Standalone OpenAI API test
+│   ├── rag.py                   # RAG answer generation
+│   ├── schemas.py               # Pydantic response models
+│   ├── test_schemas.py          # Schema validation tests
+│   ├── evaluate_retrieval.py    # Inspect retrieved evaluation results
+│   ├── evaluation_data.py       # Evaluation questions and relevance labels
+│   └── evaluate_metrics.py      # Retrieval evaluation metrics
+├── .env                         # Local environment variables
 ├── .gitignore
 └── README.md
 ```
 
+The `data/pdfs/` and `data/db/` directories contain local data and are intended to be excluded from version control.
+
+The project structure above describes the current core implementation. Additional files may be present as development continues.
+
+---
+
 ## Setup
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone <your-repository-url>
 cd RAG-Chatbot
 ```
 
-Replace `<your-repository-url>` with your Git repository URL.
+Replace `<your-repository-url>` with the repository's actual Git URL.
 
-### 2. Create a virtual environment
+### 2. Create a Virtual Environment
 
 ```bash
 python3 -m venv .venv
 ```
 
-Activate the environment on Linux:
+Activate it on Linux:
 
 ```bash
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install Dependencies
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install chromadb pypdf openai python-dotenv
+python -m pip install chromadb pypdf openai python-dotenv pydantic
 ```
 
-### 4. Configure the OpenAI API key
+These commands install the principal dependencies used by the current implementation.
 
-Create a `.env` file in the project root if one does not already exist.
+### 4. Configure the OpenAI API Key
 
-Add your API key:
+Create a `.env` file in the project root and add:
 
 ```dotenv
 OPENAI_API_KEY=your_actual_api_key_here
 ```
 
-Replace the placeholder with your actual API key.
+Replace the placeholder with your own API key.
 
-Ensure that `.env` is included in `.gitignore`:
+Ensure `.env` is included in `.gitignore`:
 
 ```gitignore
 .env
@@ -175,21 +257,21 @@ Ensure that `.env` is included in `.gitignore`:
 
 Never commit API keys or other secrets to version control.
 
-**Note:** Access to the OpenAI API may require billing setup, and API usage may incur charges.
+**Note:** OpenAI API access may require billing setup, and API usage may incur charges.
 
-### 5. Add PDF documents
+### 5. Add PDF Documents
 
-Place your PDF documents inside:
+Place PDF documents inside:
 
 ```text
 data/pdfs/
 ```
 
-The current implementation works best with PDFs containing selectable text rather than scanned page images.
+The current implementation is intended primarily for PDFs containing selectable text rather than scanned page images requiring OCR.
 
-PDF documents and the persistent database are excluded from version control. Add your own documents locally.
+Documents and the persistent vector database are local application data. Users should supply their own PDFs.
 
-### 6. Ingest documents
+### 6. Ingest Documents
 
 Run:
 
@@ -197,9 +279,9 @@ Run:
 python -m src.ingest
 ```
 
-The ingestion pipeline extracts text from the PDFs, normalizes whitespace, divides the text into chunks, assigns IDs, and stores the chunks and metadata in ChromaDB.
+The ingestion pipeline extracts PDF text, normalizes whitespace, divides the text into chunks, assigns IDs, and stores the chunks and metadata in ChromaDB.
 
-### 7. Inspect the database
+### 7. Inspect the Database
 
 Run:
 
@@ -207,9 +289,9 @@ Run:
 python -m src.inspect_db
 ```
 
-Use the inspection script to examine stored records, experiment with queries, and evaluate the retrieved passages.
+Use this script to inspect stored records, examine retrieved passages, and experiment with semantic queries.
 
-### 8. Test the OpenAI API connection
+### 8. Test the OpenAI API Connection
 
 Run:
 
@@ -217,9 +299,9 @@ Run:
 python -m src.test_llm
 ```
 
-This script makes a standalone API request to verify that the application can communicate with the configured language model.
+This performs a standalone API request to check connectivity and answer generation.
 
-### 9. Run the RAG chatbot
+### 9. Run the RAG Chatbot
 
 Run:
 
@@ -227,9 +309,37 @@ Run:
 python -m src.rag
 ```
 
-Enter a question about the contents of your PDFs when prompted.
+Enter a question about your PDFs when prompted.
 
-The application retrieves relevant chunks from ChromaDB and passes their text, together with the question, to the OpenAI API for answer generation.
+The application retrieves relevant chunks, constructs a context-aware prompt, and requests a structured answer from the OpenAI API.
+
+### 10. Inspect Retrieval Results
+
+Run:
+
+```bash
+python -m src.evaluate_retrieval
+```
+
+This script runs the configured evaluation questions through the retriever and displays the retrieved documents, source metadata, distance scores, and text excerpts.
+
+Use it to inspect retrieval behavior and determine which documents should be labeled relevant.
+
+### 11. Evaluate Retrieval Metrics
+
+Run:
+
+```bash
+python -m src.evaluate_metrics
+```
+
+This evaluates the retriever against the manually labeled relevance data.
+
+Questions without relevance labels are skipped so that unannotated questions are not automatically counted as retrieval failures.
+
+The evaluator reports Hit Rate@K, MRR, Precision@K, and Recall@K.
+
+---
 
 ## Chunking Strategy
 
@@ -241,15 +351,29 @@ The current implementation uses word-based chunking with overlapping sections.
 | Chunk overlap | 50 words |
 | Step size | 250 words |
 
-The overlap preserves some context between consecutive chunks.
+The step size determines how far the chunking window advances between consecutive chunks.
 
-Each chunk includes metadata identifying its source PDF and original page number.
+For example:
 
-Chunk size and overlap are configurable in the chunking function. Their effect on retrieval quality has not yet been systematically evaluated.
+```text
+Chunk 1: Words   1–300
+Chunk 2: Words 251–550
+Chunk 3: Words 501–800
+```
 
-## ChromaDB
+The overlap helps preserve context across chunk boundaries.
 
-The project uses a persistent ChromaDB collection named:
+Each chunk carries metadata identifying its source PDF and page number.
+
+Chunking affects retrieval because chunks that are too small may lose useful context, while chunks that are too large may contain unrelated information.
+
+The current configuration is a starting point. Alternative chunk sizes and overlap settings have not yet been systematically compared.
+
+---
+
+## ChromaDB and Vector Storage
+
+The application uses a persistent ChromaDB collection named:
 
 ```text
 research_documents
@@ -261,22 +385,20 @@ The database is stored locally in:
 data/db/
 ```
 
-Each record contains:
+Each stored record contains:
 
-- **ID:** A sequential identifier, such as `chunk_0001`.
+- **ID:** A sequential identifier such as `chunk_0001`.
 - **Document:** The extracted text of a chunk.
 - **Metadata:** The source PDF filename and page number.
-- **Embedding:** A numerical representation used for semantic retrieval.
+- **Embedding:** A numerical representation used for semantic search.
 
-ChromaDB automatically generates embeddings when documents are added without explicitly supplied embeddings.
-
-The collection uses ChromaDB's default embedding function and distance metric unless configured otherwise.
+When documents are added without explicitly supplied embeddings, ChromaDB uses the collection's configured embedding function to generate them.
 
 ### Semantic Retrieval
 
-The retriever uses ChromaDB's query functionality to find chunks similar to the user's question.
+The retriever uses ChromaDB's query functionality to retrieve chunks similar to a user's question.
 
-A basic query looks like this:
+Example:
 
 ```python
 results = collection.query(
@@ -286,9 +408,9 @@ results = collection.query(
 )
 ```
 
-The `n_results` parameter controls how many matching chunks are requested.
+The `n_results` parameter specifies the requested number of matching chunks.
 
-Because ChromaDB supports multiple queries in a single request, the results are grouped by query. When submitting one query, the matching chunks are accessed through:
+Because ChromaDB supports multiple queries per request, results are grouped by query. For a single query, the matching documents are accessed through:
 
 ```python
 results["documents"][0]
@@ -296,9 +418,9 @@ results["documents"][0]
 
 ### Metadata Filtering
 
-The retriever can optionally restrict its search to a particular source document.
+The retriever supports optional filtering by source filename.
 
-Conceptually, the filter is:
+For example:
 
 ```python
 where = {"source": "example.pdf"}
@@ -306,53 +428,109 @@ where = {"source": "example.pdf"}
 
 This restricts retrieval to chunks whose source metadata matches the specified filename.
 
-Without a filter, the retriever searches the entire collection.
+Without a filter, the retriever searches the collection without that source restriction.
 
 ### Understanding Distance Scores
 
-ChromaDB returns distance values that indicate the distance between the query embedding and retrieved document embeddings.
+ChromaDB returns distance values representing distances between query and document embeddings.
 
-For the collection's default squared L2 distance metric, smaller values indicate closer embeddings.
+For a collection using squared L2 distance, smaller values indicate closer embeddings.
 
-However, distance is not a percentage or a direct measure of answer correctness. Retrieval quality must be evaluated by inspecting the returned content and determining whether it helps answer the question.
+Distance is not a confidence percentage and does not directly measure answer correctness. Its interpretation also depends on the configured distance metric.
 
-### Important Consideration: Chunk IDs
+Retrieval quality must be evaluated by examining the returned passages and determining whether they are relevant to the question.
 
-The current implementation uses sequential chunk IDs.
+### Chunk IDs and Document Updates
 
-These IDs are suitable for learning and experimentation, but they are not stable identifiers for document content. If documents change or chunk ordering changes, the same ID may refer to different text.
+The current ingestion implementation uses sequential chunk IDs.
 
-The ingestion pipeline also does not automatically remove obsolete records. Consequently, document updates may leave stale chunks in the collection.
+These IDs are suitable for initial development, but they do not necessarily remain associated with the same content when documents or chunk ordering change.
 
-Stable IDs and document update handling are future improvements.
+The ingestion process also does not yet provide comprehensive synchronization between the PDF directory and the database. Updating or removing source documents may leave obsolete chunks in the collection unless they are explicitly handled.
+
+Stable identifiers, deduplication, and reliable document update handling remain future improvements.
+
+---
 
 ## The Retriever
 
-The reusable retriever is implemented in:
+The reusable retrieval logic is implemented in:
 
 ```text
 src/retriever.py
 ```
 
-Its main function is:
+The main function is:
 
 ```python
-retrieve_documents(query, n_results=3, source=None)
+retrieve_documents(query, n_results=3)
 ```
 
-Parameters:
+The implementation also supports an optional source filter.
 
 | Parameter | Purpose |
 |---|---|
-| `query` | The user's question or search text |
-| `n_results` | Maximum number of matching chunks to retrieve |
-| `source` | Optional source filename for metadata filtering |
+| `query` | The question or search text |
+| `n_results` | Maximum number of chunks requested |
+| `source` | Optional filename used to restrict retrieval |
 
-The function returns a list of dictionaries containing the retrieved text, source filename, page number, and distance score.
+The retriever returns structured document objects validated using Pydantic.
 
-This separates retrieval logic from answer generation and allows other components to reuse the retriever.
+A retrieved document contains:
 
-## RAG Answer Generation
+| Field | Description |
+|---|---|
+| `text` | The retrieved chunk's text |
+| `source` | The source PDF filename |
+| `page_number` | The associated page number |
+| `distance` | The vector distance returned by ChromaDB |
+
+Separating retrieval from answer generation makes the retriever reusable by evaluation scripts and future application interfaces.
+
+---
+
+## Structured RAG Responses
+
+The application defines Pydantic models in:
+
+```text
+src/schemas.py
+```
+
+The core response models represent retrieved documents, citations, and generated answers.
+
+Conceptually, the answer follows this structure:
+
+```python
+RAGAnswer(
+    answer="Generated answer text",
+    citations=[
+        Citation(
+            source="example.pdf",
+            page_number=10
+        )
+    ],
+    insufficient_context=False
+)
+```
+
+The actual answer and citations depend on the question and retrieved context.
+
+### Response Fields
+
+| Field | Purpose |
+|---|---|
+| `answer` | The generated natural-language response |
+| `citations` | Source filenames and page numbers supporting the answer |
+| `insufficient_context` | Indicates whether the model considers the retrieved context inadequate |
+
+The retrieved-document model also validates the text, source, page number, and distance.
+
+Using structured models helps catch invalid response shapes and unexpected data types.
+
+However, Pydantic validates the response structure rather than the factual truth of the answer. Citation correctness and answer faithfulness require separate evaluation.
+
+### Answer Generation
 
 The main RAG implementation is located in:
 
@@ -360,116 +538,233 @@ The main RAG implementation is located in:
 src/rag.py
 ```
 
-The `generate_answer()` function follows four steps:
+The `generate_answer()` function follows these steps:
 
-1. **Retrieve:** Call the retriever to find relevant chunks.
-2. **Construct context:** Combine the retrieved chunk text into a context string.
-3. **Construct the prompt:** Provide the context and question to the language model, along with instructions for answering.
-4. **Generate:** Send the prompt to the OpenAI API and return the generated text.
+1. **Retrieve:** Find potentially relevant chunks using the retriever.
+2. **Construct context:** Combine the retrieved text with its source and page metadata.
+3. **Construct the prompt:** Supply the context and user's question alongside instructions for grounded answering.
+4. **Generate:** Request a structured response from the OpenAI API.
+5. **Validate:** Parse the response using the `RAGAnswer` Pydantic model.
+
+The application uses the `gpt-4.1-mini` model through the OpenAI Responses API.
+
+### Insufficient Context
+
+The model is instructed to answer using only the supplied context, avoid unsupported facts, and acknowledge when the available passages do not adequately answer the question.
+
+If retrieval returns no documents, the application returns a predefined response indicating that relevant information could not be found.
+
+When the model considers the context insufficient, it is instructed to return an appropriate status and avoid unsupported citations.
+
+These safeguards help structure the intended behavior but do not guarantee that every answer is correct or that the model will always identify insufficient context accurately.
+
+### Citations
+
+Retrieved passages are supplied to the model with source filenames and page numbers.
+
+The model is instructed to return citations for sources that support its answer and to use only source information provided in the context.
+
+Citations are currently model-generated structured references. The application has not yet implemented an independent verification step that checks whether every citation supports the associated claims.
+
+Citation validation and answer faithfulness are planned evaluation tasks.
+
+---
+
+## Retrieval Evaluation
+
+Retrieval evaluation measures whether the system finds relevant document chunks for a set of test questions.
+
+The evaluation implementation consists of:
+
+| File | Purpose |
+|---|---|
+| `src/evaluation_data.py` | Stores test questions and manually labeled relevant documents |
+| `src/evaluate_retrieval.py` | Displays retrieved documents for inspection |
+| `src/evaluate_metrics.py` | Calculates retrieval evaluation metrics |
+
+### Evaluation Data
+
+Each evaluation question contains a list of relevant document references.
 
 Conceptually:
 
 ```python
-documents = retrieve_documents(question, n_results=3)
-
-context = "\n\n".join(
-    document["text"] for document in documents
-)
+{
+    "question": "What is artificial intelligence?",
+    "relevant_sources": [
+        ("example.pdf", 45),
+        ("example.pdf", 60),
+    ],
+}
 ```
 
-The resulting context is included in the prompt sent to the language model.
+The filenames and page numbers must correspond to actual retrieved document metadata.
 
-The current implementation uses the `gpt-4.1-mini` model through the OpenAI Responses API.
+Relevance labels should be assigned by inspecting the document content and determining whether it is useful for answering the question.
 
-### Context-Grounded Answers
+For Recall@K to be meaningful, the labels should include the relevant documents identified for the question, not merely those already returned by the retriever.
 
-The prompt instructs the language model to answer using the supplied context. If the retrieved passages do not contain sufficient information, the model is instructed to say that it cannot answer based on the provided documents.
+Questions without relevance labels are skipped.
 
-This behavior is useful for reducing unsupported answers, but prompt instructions alone cannot guarantee factual accuracy or prevent hallucinations.
+### Metrics
 
-The current implementation also does not yet verify individual claims against their source passages.
+#### Hit Rate@K
 
-### Example Interaction
+Measures the proportion of evaluated questions for which at least one relevant document appears among the top K retrieved results.
 
-**Question:**
+\[
+\operatorname{HitRate@K}
+=
+\frac{\text{Questions with a relevant result in top K}}
+{\text{Evaluated questions}}
+\]
 
-```text
-How does AI assist in improving BI?
-```
+#### Mean Reciprocal Rank (MRR)
 
-**Possible response:**
+Measures how highly the first relevant document ranks for each question.
 
-```text
-The provided context does not explicitly explain how AI assists
-in improving Business Intelligence (BI). It discusses Power BI
-as a business analytics service and highlights challenges in
-data preparation and access for BI but does not detail the role
-of AI in enhancing BI capabilities.
+\[
+\operatorname{MRR}
+=
+\frac{1}{N}
+\sum_{i=1}^{N}\frac{1}{r_i}
+\]
 
-Therefore, based on the provided documents, I cannot answer
-how AI assists in improving BI.
-```
+Here, \(r_i\) is the rank of the first relevant result for question \(i\). A question with no relevant result among the retrieved documents contributes zero.
 
-This example illustrates the importance of retrieval quality. The chatbot may correctly recognize that its retrieved context does not contain enough information to answer the question.
+Higher MRR indicates that relevant results tend to appear closer to the top.
 
-However, an answer like this does not necessarily mean the entire document collection lacks the information. The retriever may simply have failed to retrieve the most useful passages.
+#### Precision@K
+
+Measures the proportion of retrieved documents that are relevant.
+
+\[
+\operatorname{Precision@K}
+=
+\frac{\text{Relevant retrieved documents}}
+{\text{Retrieved documents}}
+\]
+
+The implementation uses the actual number of returned documents as the denominator, allowing it to handle cases where fewer than K documents are returned.
+
+If no documents are returned, precision is defined as zero for that question.
+
+#### Recall@K
+
+Measures the proportion of labeled relevant documents that are retrieved within the top K results.
+
+\[
+\operatorname{Recall@K}
+=
+\frac{\text{Relevant retrieved documents}}
+{\text{Labeled relevant documents}}
+\]
+
+The evaluator calculates these metrics for each labeled question and reports the mean precision and mean recall across evaluated questions.
+
+### Initial Evaluation Results
+
+The initial four-question evaluation produced the following results:
+
+| Metric | Result |
+|---|---:|
+| Hit Rate@3 | 100.00% |
+| MRR | 87.50% |
+| Mean Precision@3 | 91.67% |
+| Mean Recall@3 | 91.67% |
+
+These results are an initial baseline for the current test set and relevance labels.
+
+The results suggest that the retriever found at least one labeled relevant document within the top three results for every evaluated question. The MRR result reflects the fact that the first relevant result did not always appear at rank one.
+
+**These scores do not establish overall system reliability.** The evaluation set contains only four questions, and its results depend on the completeness and accuracy of the manually assigned relevance labels.
+
+A larger and more diverse test set is needed before drawing broader conclusions.
+
+### Current Evaluation Limitations
+
+- The evaluation set is small.
+- Relevance judgments are manually assigned.
+- Recall depends on the completeness of the relevance labels.
+- Evaluation results depend on the chosen chunking strategy and retrieval settings.
+- Retrieval metrics do not measure the factual correctness of generated answers.
+- Citation correctness and answer faithfulness have not yet been independently evaluated.
+
+---
 
 ## Current Development Status
 
 ### Completed
 
 - [x] Project structure and Python environment
-- [x] PDF text extraction
-- [x] Text cleaning
+- [x] PDF text extraction using `pypdf`
+- [x] Text normalization and cleaning
 - [x] Word-based chunking with overlap
-- [x] Sequential chunk ID generation
+- [x] Sequential chunk IDs
 - [x] Persistent ChromaDB collection
-- [x] Chunk storage and metadata
-- [x] Database inspection
-- [x] Semantic search
-- [x] Distance inspection
+- [x] Document storage and source metadata
+- [x] Embedding generation through ChromaDB
+- [x] Semantic retrieval
 - [x] Metadata filtering
-- [x] Configurable number of search results
-- [x] Reusable document retriever
-- [x] OpenAI API connection
-- [x] Basic LLM answer generation
-- [x] Initial RAG pipeline combining retrieval and generation
+- [x] Configurable retrieval count
+- [x] Retrieval distance inspection
+- [x] Reusable retriever function
+- [x] OpenAI API integration
+- [x] Context-grounded answer generation
+- [x] Pydantic models for retrieved documents and RAG answers
+- [x] Structured answer generation through the OpenAI Responses API
+- [x] Source and page citation representation
+- [x] Insufficient-context status
+- [x] Evaluation question dataset
+- [x] Manual relevance labels for the initial evaluation set
+- [x] Hit Rate@K
+- [x] Mean Reciprocal Rank (MRR)
+- [x] Precision@K
+- [x] Recall@K
+- [x] Handling fewer retrieved documents when calculating precision
+- [x] Initial retrieval evaluation
+- [x] Git version control and project commits
 
-### Planned Improvements
+### Next Development Phase
 
-- [ ] Create a test set of questions with expected source passages.
-- [ ] Evaluate retrieval relevance and ranking quality.
-- [ ] Compare chunk sizes and overlap settings.
-- [ ] Improve chunk IDs and document update handling.
-- [ ] Introduce Pydantic models for structured application data.
-- [ ] Explore OpenAI Structured Outputs where appropriate.
-- [ ] Improve prompt construction and context handling.
-- [ ] Add source citations to generated answers.
-- [ ] Evaluate whether generated answers are supported by retrieved passages.
-- [ ] Add automated tests.
-- [ ] Build a FastAPI endpoint.
-- [ ] Develop an optional web interface.
-- [ ] Improve error handling, logging, and API usage management.
+#### A. Improve Retrieval Quality
 
-## Learning Objectives
+- [ ] Expand the evaluation dataset with additional questions.
+- [ ] Review and improve relevance labels.
+- [ ] Record a reproducible baseline for retrieval settings.
+- [ ] Compare alternative chunk sizes.
+- [ ] Experiment with chunk overlap.
+- [ ] Compare different values of K.
+- [ ] Evaluate changes using the existing retrieval metrics.
+- [ ] Investigate weak retrieval results.
+- [ ] Improve chunk identifiers and document update handling.
 
-This project is intended to build practical understanding of:
+#### B. Evaluate Answer Quality
 
-- PDF text extraction and preprocessing.
-- Chunking strategies for retrieval systems.
-- Vector databases and embeddings.
-- Semantic similarity search.
-- Metadata filtering.
-- Retrieval quality evaluation.
-- LLM integration through an API.
-- Context construction and prompt engineering.
-- Structured data validation.
-- Reliable RAG application design.
+- [ ] Create a dataset with expected answers or key facts.
+- [ ] Test whether answers are supported by retrieved context.
+- [ ] Evaluate answer relevance.
+- [ ] Verify citation filenames and page numbers.
+- [ ] Investigate citation support for individual claims.
+- [ ] Test questions that cannot be answered from the document collection.
+- [ ] Evaluate insufficient-context behavior.
+- [ ] Add automated tests for important RAG behaviors.
 
-## Future Direction
+#### C. Build an API
 
-The next stage of development will focus on improving the reliability and maintainability of the current implementation before introducing additional infrastructure.
+- [ ] Build a FastAPI application.
+- [ ] Add a `POST /ask` endpoint.
+- [ ] Validate API requests using Pydantic.
+- [ ] Return structured answers and citations.
+- [ ] Add error handling and appropriate HTTP status codes.
+- [ ] Test endpoints using FastAPI's interactive documentation.
+- [ ] Add API tests.
+- [ ] Explore an optional web interface.
 
-Planned improvements include retrieval evaluation, structured data models, source-aware answers, automated testing, and an API layer.
+#### Additional Improvements
 
-The long-term goal is to build a maintainable document question-answering application that can retrieve relevant information from a collection of PDFs and produce useful, context-grounded responses.
+- [ ] Improve logging and error reporting.
+- [ ] Manage API usage and costs.
+- [ ] Add reliable document update and deletion handling.
+- [ ] Improve reproducibility of retrieval experiments.
+- [ ] Document evaluation methodology and experimental results.
