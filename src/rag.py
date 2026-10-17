@@ -8,11 +8,11 @@ from schemas import RAGAnswer
 load_dotenv()
 client = OpenAI()
 
-def generate_answer(question):
+def generate_answer(question, n_results=3, collection_name="research_documents"):
     """Generates answer from question"""
 
     # Retrieve documents
-    documents = retrieve_documents(question, n_results=3)
+    documents = retrieve_documents(question, n_results, collection_name)
 
     if not documents:
         return RAGAnswer(
@@ -43,15 +43,22 @@ def generate_answer(question):
                 provided context.
                 
                 Instructions:
-                1. Do not invent facts not provided by the context.
-                2. If the context is insufficient to answer, explain what is missing.
-                3. Set insufficient_context true when the context does not clearly answer the question, 
-                    otherwise set false.
-                4. Include citations to support your answer.
-                5. Use only source names and page numbers provided in the context.
-                6. Do not create citations for sources that do not support your answer.
-                7. If the context is insufficient, return an empty citations list, 
-                    unless some sources partially support the given context.
+                1. Use only provided context as evidence and do not use outside information to fill gaps.
+                2. Every factual claim in your answer must be supported by the provided context.
+                3. Do not infer details that the context do not establish.
+                4. If the context only has a heading, an incomplete sentence, or a fragment of information,
+                    do not treat as a sufficient evidence for a detailed claim.
+                5. If the context partially supports the answer, explain what can be established and what is 
+                    missing.
+                6. Set insufficient_context true when the context does not adequately support a complete answer
+                    to the question. Set it to false only when the context adequately support the answer.
+                7. Include citations only to sources and page numbers provided in the context.
+                8. Cite only sources that support claims made in your answer.
+                9. If the context provides no meaningful evidence for an answer, state that the available 
+                    documents do not provide sufficient information and return an empty citation list.
+                10. If the context partially supports the answer, cite the supporting sources and clearly 
+                    acknowledge limitations.
+                 
                 """
             ),
             EasyInputMessageParam(
@@ -72,7 +79,7 @@ def generate_answer(question):
 
 if __name__ == '__main__':
     question = input("> ")
-    result = generate_answer(question)
+    result = generate_answer(question, 3, "research_documents_300")
 
     print("\n--- Answer ---")
     print(result.answer)
@@ -80,7 +87,7 @@ if __name__ == '__main__':
     if result.citations:
         print("\n--- Sources ---")
         for i, citation in enumerate(result.citations, start=1):
-            print(f"{i}. [Source: {citation.source} | pp. {citation.page_number}]")
+            print(f"[{i}] Source: {citation.source} | pp. {citation.page_number}")
 
     print("\nInsufficient context" if result.insufficient_context else
           "\nSufficient context reported by model")

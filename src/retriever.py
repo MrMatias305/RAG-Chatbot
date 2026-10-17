@@ -39,8 +39,18 @@ def retrieve_documents(query,
 
 
 if __name__ == "__main__":
-    results = retrieve_documents("What is Kanban?", 5,
-                                 collection_name='research_documents_200')
+    documents = retrieve_documents("According to the retrieved documents, what are the key practices of Scrum?",
+                                   n_results=3,
+                                   collection_name='research_documents_300')
 
-    for i, result in enumerate(results, start=1):
-        print(f"{i}. {result.text}")
+    for i, document in enumerate(documents, start=1):
+        print("="*60)
+        print(f"DOCUMENT {i}")
+        print(f"SOURCE: {document.source}")
+        print(f"PAGE: {document.page_number}")
+        print(f"DISTANCE: {document.distance}")
+        print("=" * 60)
+        print(document.text)
+        print()
+
+
