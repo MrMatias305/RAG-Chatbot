@@ -39,7 +39,8 @@ def retrieve_documents(query,
 
 
 if __name__ == "__main__":
-    documents = retrieve_documents("According to the retrieved documents, what are the key practices of Scrum?",
+    question = input("> ")
+    documents = retrieve_documents(question,
                                    n_results=3,
                                    collection_name='research_documents_300')
 
