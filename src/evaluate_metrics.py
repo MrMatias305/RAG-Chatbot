@@ -2,7 +2,7 @@ from evaluation_data import evaluation_questions
 from retriever import retrieve_documents
 
 
-def evaluate_retrieval(k=3):
+def evaluate_retrieval(k=3, collection_name="research_documents"):
     hits = 0
     reciprocal_ranks = []
     precision_scores = []
@@ -20,7 +20,7 @@ def evaluate_retrieval(k=3):
 
         evaluated_questions += 1
 
-        documents = retrieve_documents(question, n_results=k)
+        documents = retrieve_documents(question, n_results=k, collection_name=collection_name)
         retrieved_sources = {
             (document.source, document.page_number) for document in documents
         }
@@ -73,10 +73,10 @@ def evaluate_retrieval(k=3):
 
     print("\n", "="*40)
     print(f"Hit Rate@{k}: {hit_rate:.2%}")
-    print(f"MRR: {mrr:.4%}")
+    print(f"MRR: {mrr:.2%}")
     print(f"Mean Precision@{k}: {mean_precision:.2%}")
     print(f"Mean Recall@{k}: {mean_recall:.2%}")
     print("="*40)
 
 if __name__ == "__main__":
-    evaluate_retrieval(3)
+    evaluate_retrieval(5, "research_documents_300")

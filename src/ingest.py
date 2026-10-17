@@ -3,7 +3,7 @@ from pathlib import Path
 
 from vector_db import store_chunks
 
-PDF_DIR = Path(__file__).parent.parent / 'data/pdfs'
+PDF_DIR = Path(__file__).parent.parent / "data" / "pdfs"
 
 def extract_pdfs():
 	"""Get all PDFs found in PDF_DIR"""
@@ -50,29 +50,42 @@ def chunk_text(text, chunk_size=300, overlap=50):
 	return chunks
 
 
-if __name__ == "__main__":
+def ingest_documents(chunk_size=300,
+					 overlap=50,
+					 collection_name="research_documents"):
+	"""Ingest all PDFs in chunks"""
 
-	if not extract_pdfs():
+	pdf_files = extract_pdfs()
+
+	if not pdf_files:
 		print("No PDFs found")
-	else:
-		all_chunks = []
-		print("Found {} PDFs".format(len(extract_pdfs())))
 
-		for pdf in extract_pdfs():
-			pages = extract_text(pdf)
+	all_chunks = []
+	print(f"Found {len(pdf_files)} PDFs")
+	print(f"Chunk size: {chunk_size}")
+	print(f"Overlap: {overlap}")
+	print(f"Collection name: {collection_name}")
 
-			for page in pages:
-				chunks = chunk_text(page["text"])
+	for pdf in pdf_files:
+		pages = extract_text(pdf)
 
-				for chunk in chunks:
-					chunk_id = f"chunk_{len(all_chunks)+1:04d}"
-					all_chunks.append({
-						"chunk_id": chunk_id,
-						"source": page["source"],
-						"page_number": page["page_number"],
-						"text": chunk
-					})
+		for page in pages:
+			chunks = chunk_text(page["text"], chunk_size, overlap)
 
-		store_chunks(all_chunks)
+			for chunk in chunks:
+				all_chunks.append({
+					"chunk_id": f"chunk_{len(all_chunks)+1:04d}",
+					"source": page["source"],
+					"page_number": page["page_number"],
+					"text": chunk
+				})
 
+	store_chunks(all_chunks, collection_name)
+	print(f"Total chunks generated: {len(all_chunks)}")
+
+
+if __name__ == "__main__":
+	ingest_documents(300,
+					 50,
+					 collection_name="research_documents_300")
 
