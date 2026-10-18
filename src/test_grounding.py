@@ -27,15 +27,24 @@ def test_grounding():
         print(f"Evidence: {evaluation.evidence}")
         print(f"Explanation: {evaluation.explanation}")
 
-    # total_claims = len(report.evaluations)
-    # supported_claims = sum(evaluation.supported for evaluation in report.evaluations)
+    total_claims = len(report.evaluations)
+    supported_claims = sum(evaluation.support_level == "supported"
+                           for evaluation in report.evaluations)
+    partially_supported_claims = sum(evaluation.support_level == "partially_supported"
+                           for evaluation in report.evaluations)
+    any_supported_claims = supported_claims + partially_supported_claims
+    unsupported_claims = total_claims - any_supported_claims
 
-    # print()
-    # print("=" * 60)
-    # print(f"Total Claims evaluated: {total_claims}")
-    # print(f"Supported Claims: {supported_claims}")
-    # print("Unsupported Claims: ", total_claims - supported_claims)
-    # print("="*60)
+    # Test grounding metrics
+    print()
+    print("=" * 60)
+    print(f"Total Claims evaluated: {total_claims}")
+    print(f"Fully supported Claims: {supported_claims}")
+    print(f"Partially supported Claims: {partially_supported_claims}")
+    print("Unsupported Claims: ", unsupported_claims)
+    print(f"Full support rate: {supported_claims / total_claims:.2f}%")
+    print(f"Any support rate: {any_supported_claims / total_claims:.2f}%")
+    print("="*60)
 
 
 if __name__ == "__main__":
