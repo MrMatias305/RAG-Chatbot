@@ -23,19 +23,19 @@ def test_grounding():
     for i, evaluation in enumerate(report.evaluations, start=1):
         print(f"\nEvaluation {i}")
         print(f"Claim: {evaluation.claim}")
-        print(f"Supported Claim: {evaluation.supported}")
+        print(f"Supported Claim: {evaluation.support_level}")
         print(f"Evidence: {evaluation.evidence}")
         print(f"Explanation: {evaluation.explanation}")
 
-    total_claims = len(report.evaluations)
-    supported_claims = sum(evaluation.supported for evaluation in report.evaluations)
+    # total_claims = len(report.evaluations)
+    # supported_claims = sum(evaluation.supported for evaluation in report.evaluations)
 
-    print()
-    print("=" * 60)
-    print(f"Total Claims evaluated: {total_claims}")
-    print(f"Supported Claims: {supported_claims}")
-    print("Unsupported Claims: ", total_claims - supported_claims)
-    print("="*60)
+    # print()
+    # print("=" * 60)
+    # print(f"Total Claims evaluated: {total_claims}")
+    # print(f"Supported Claims: {supported_claims}")
+    # print("Unsupported Claims: ", total_claims - supported_claims)
+    # print("="*60)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ class RAGAnswer(BaseModel):
 
 class GroundingEvaluation(BaseModel):
     claim: str
-    supported: bool
+    support_level: str
     evidence: str
     explanation: str
 
@@ -33,7 +33,7 @@ class GroundingReport(BaseModel):
 if __name__ == '__main__':
     print(GroundingEvaluation(
         claim="AI models analyze datasets to identify patterns.",
-        supported=True,
+        support_level="fully supported",
         evidence="The AI model utilizes a data set and searches through it for patterns.",
         explanation="The retrieved passage directly supports the claim.",
     ))
