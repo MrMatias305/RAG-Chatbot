@@ -12,14 +12,17 @@ def generate_answer(question, n_results=3, collection_name="research_documents")
     """Generates answer from question"""
 
     # Retrieve documents
-    documents = retrieve_documents(question, n_results, collection_name)
+    documents = retrieve_documents(question,
+                                   n_results,
+                                   collection_name
+                                   )
 
     if not documents:
-        return RAGAnswer(
+        return (RAGAnswer(
             answer="I cannot find relevant information in the documents",
             citations=[],
             insufficient_context=True,
-        )
+        ), [])
 
     # Build context
     context_parts = []
@@ -75,11 +78,11 @@ def generate_answer(question, n_results=3, collection_name="research_documents")
         text_format=RAGAnswer,
     )
 
-    return response.output_parsed
+    return response.output_parsed, documents
 
 if __name__ == '__main__':
     question = input("> ")
-    result = generate_answer(question, 3, "research_documents_300")
+    result, documents = generate_answer(question, 3, "research_documents_300")
 
     print("\n--- Answer ---")
     print(result.answer)
@@ -91,3 +94,7 @@ if __name__ == '__main__':
 
     print("\nInsufficient context" if result.insufficient_context else
           "\nSufficient context reported by model")
+
+    print("\n--- Retrieved Documents ---")
+    for i, document in enumerate(documents, start=1):
+        print(f"[{i}] Source: {document.source} | pp. {document.page_number} | dist. {document.distance:.3f}")
