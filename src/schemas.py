@@ -26,6 +26,10 @@ class GroundingEvaluation(BaseModel):
     explanation: str
 
 
+class GroundingReport(BaseModel):
+    evaluations: list[GroundingEvaluation]
+
+
 if __name__ == '__main__':
     print(GroundingEvaluation(
         claim="AI models analyze datasets to identify patterns.",
