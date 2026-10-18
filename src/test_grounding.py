@@ -35,6 +35,9 @@ def test_grounding():
     any_supported_claims = supported_claims + partially_supported_claims
     unsupported_claims = total_claims - any_supported_claims
 
+    full_support_rate = supported_claims / total_claims * 100
+    any_support_rate = any_supported_claims / total_claims * 100
+
     # Test grounding metrics
     print()
     print("=" * 60)
@@ -42,8 +45,8 @@ def test_grounding():
     print(f"Fully supported Claims: {supported_claims}")
     print(f"Partially supported Claims: {partially_supported_claims}")
     print("Unsupported Claims: ", unsupported_claims)
-    print(f"Full support rate: {supported_claims / total_claims:.2f}%")
-    print(f"Any support rate: {any_supported_claims / total_claims:.2f}%")
+    print(f"Full support rate: {full_support_rate:.2f}%")
+    print(f"Any support rate: {any_support_rate:.2f}%")
     print("="*60)
 
 

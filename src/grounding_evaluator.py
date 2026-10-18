@@ -72,6 +72,25 @@ def evaluate_grounding(answer, documents):
                     "supported" when the evidence establishes only part of it.
                 14. Return one of the three exact support-level values for
                     every claim: supported, partially_supported, unsupported.
+                15. Evaluate every meaningful component of each claim separately before 
+                    assigning its overall support level. A claim is "supported" only if the evidence 
+                    establishes the entire claim.
+                16. Do not transfer evidence between related concepts. Evidence about AI alone 
+                    does not establish a claim about both AI and Business Intelligence (BI).
+                17. Distinguish direct evidence from inference. A document title, topic association, 
+                    or contextual implication is not sufficient to establish a factual relationship that 
+                    the text does not explicitly support.    
+                18. Two individually supported facts do not automatically establish a relationship 
+                    between them. For example, evidence that AI makes predictions and evidence 
+                    that BI organizes data do not, by themselves, prove that AI extends BI.
+                19. When a claim contains multiple assertions and only some are supported, 
+                    classify it as "partially_supported". Identify which components are supported and 
+                    which are not.
+                20. Check the evidence against the exact wording of the claim. Do not claim that 
+                    a passage establishes something unless the passage actually provides that evidence.
+                21. Before finalizing each evaluation, ask yourself: "Does the cited evidence support 
+                    every part of this claim, or have I filled a gap using assumptions or outside knowledge?" 
+                    Revise the support level if necessary.
                 """
             ),
             EasyInputMessageParam(
