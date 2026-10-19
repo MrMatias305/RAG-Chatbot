@@ -8,7 +8,9 @@ from schemas import RAGAnswer
 load_dotenv()
 client = OpenAI()
 
-def generate_answer(question, n_results=3, collection_name="research_documents"):
+def generate_answer(question,
+                    n_results=3,
+                    collection_name="research_documents_300"):
     """Generates answer from question"""
 
     # Retrieve documents

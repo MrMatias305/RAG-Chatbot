@@ -1,4 +1,6 @@
-
 openai
 chromadb
 pypdf
+python-dotenv
+pydantic
+streamlit

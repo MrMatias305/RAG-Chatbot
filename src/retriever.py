@@ -4,7 +4,7 @@ from vector_db import get_collection
 
 def retrieve_documents(query,
                        n_results=3,
-                       collection_name='research_documents',
+                       collection_name='research_documents_300',
                        source=None):
     """Retrieves documents from a query."""
 

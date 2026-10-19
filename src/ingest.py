@@ -1,7 +1,7 @@
 from pypdf import PdfReader
 from pathlib import Path
 
-from vector_db import store_chunks
+from src.vector_db import store_chunks
 
 PDF_DIR = Path(__file__).parent.parent / "data" / "pdfs"
 
