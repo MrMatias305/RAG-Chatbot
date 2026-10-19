@@ -30,6 +30,19 @@ class GroundingReport(BaseModel):
     evaluations: list[GroundingEvaluation]
 
 
+class CitationSupportEvaluation(BaseModel):
+    claim: str
+    source: str
+    page_number: int
+    support_level: str
+    evidence: str
+    explanation: str
+
+
+class CitationSupportReport(BaseModel):
+    evaluations: list[CitationSupportEvaluation]
+
+
 if __name__ == '__main__':
     print(GroundingEvaluation(
         claim="AI models analyze datasets to identify patterns.",

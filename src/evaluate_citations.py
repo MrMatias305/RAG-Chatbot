@@ -22,7 +22,11 @@ def evaluate_citations(questions, k=3):
             for document in documents
         }
 
+        print("-"*80)
         print(f"\nQuestion: {question}")
+        print(f"\nRetrieved source-page pairs:")
+        for source, page in retrieved_pages:
+            print(f"Source: {source} | pp. {page}")
 
         for citation in citations:
             total_citations += 1
